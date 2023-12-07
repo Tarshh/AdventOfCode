@@ -46,6 +46,9 @@ function swapWrittenNumbers(item: string) {
 
   for (let i = 0; i < item.length; i++) {
     let substring = newString.substring(i, item.length);
+    if (parseInt(substring.charAt(0))) {
+      foundFirstNumber = true;
+    }
     for (let writtenNumber of writtenNumbers) {
       if (
         substring.startsWith(writtenNumber.writtenValue) &&
@@ -63,17 +66,14 @@ function swapWrittenNumbers(item: string) {
   if (foundFirstNumber) {
     for (let i = newString.length - 1; i > 0; i--) {
       const subString = newString.substring(i, newString.length);
-      // console.log({ subString });
       for (let writtenNumber of writtenNumbers) {
         if (
           subString.startsWith(writtenNumber.writtenValue) &&
           !foundLastNumber
         ) {
-          console.log("ik vind 'm wel");
-          console.log(writtenNumber.writtenValue);
-
+          const allOccurences = new RegExp(writtenNumber.writtenValue, "g");
           newString = newString.replace(
-            writtenNumber.writtenValue,
+            allOccurences,
             writtenNumber.numberValue.toString()
           );
           foundLastNumber = true;
@@ -82,7 +82,6 @@ function swapWrittenNumbers(item: string) {
       }
     }
   }
-  console.log({ newString });
   return newString;
 }
 
@@ -99,9 +98,9 @@ function day1() {
         ? numbersOnly.charAt(0) + numbersOnly.slice(-1)
         : numbersOnly.charAt(0) + numbersOnly.charAt(0);
     total += parseInt(numberToAdd);
-    console.log(numberToAdd);
+    console.log({ numberToAdd });
   });
-  // console.log(total);
+  console.log(total);
 }
 
 day1();
