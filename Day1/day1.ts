@@ -85,8 +85,8 @@ function swapWrittenNumbers(item: string) {
   return newString;
 }
 
-function day1() {
-  const lines = fs.readFileSync("./inputDay1.txt", "utf-8");
+function day1(inputFile: string) {
+  const lines = fs.readFileSync(inputFile, "utf-8");
   const splittedLines: string[] = lines.split("\r\n");
   let total = 0;
 
@@ -98,9 +98,8 @@ function day1() {
         ? numbersOnly.charAt(0) + numbersOnly.slice(-1)
         : numbersOnly.charAt(0) + numbersOnly.charAt(0);
     total += parseInt(numberToAdd);
-    console.log({ numberToAdd });
   });
   console.log(total);
 }
 
-day1();
+day1("./inputDay1.txt");
