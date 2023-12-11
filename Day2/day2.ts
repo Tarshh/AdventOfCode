@@ -10,6 +10,9 @@ function playGame(gameId: number, game: string): number {
   const totalAmountOfRedCubes = 12;
   const totalAmountOfGreenCubes = 13;
   const totalAmountOfBlueCubes = 14;
+  let leastAmountOfRedCubes = 0;
+  let leastAmountOfGreenCubes = 0;
+  let leastAmountOfBlueCubes = 0;
   let impossibleGame = false;
 
   const sets = game.split(": ").pop();
@@ -21,25 +24,33 @@ function playGame(gameId: number, game: string): number {
       const trimmedColorWithNumber = color.trim();
       const cubeNumber = parseInt(trimmedColorWithNumber.replace(/\D/g, ""));
       const cubeColor = trimmedColorWithNumber.replace(/\d+/g, "").trim();
-      if (!impossibleGame) {
-        switch (cubeColor) {
-          case Cubecolors.blue: {
-            cubeNumber > totalAmountOfBlueCubes && (impossibleGame = true);
-            break;
-          }
-          case Cubecolors.green: {
-            cubeNumber > totalAmountOfGreenCubes && (impossibleGame = true);
-            break;
-          }
-          case Cubecolors.red: {
-            cubeNumber > totalAmountOfRedCubes && (impossibleGame = true);
-            break;
-          }
+      switch (cubeColor) {
+        case Cubecolors.blue: {
+          cubeNumber > totalAmountOfBlueCubes && (impossibleGame = true);
+          leastAmountOfBlueCubes < cubeNumber &&
+            (leastAmountOfBlueCubes = cubeNumber);
+          break;
+        }
+        case Cubecolors.green: {
+          cubeNumber > totalAmountOfGreenCubes && (impossibleGame = true);
+          leastAmountOfGreenCubes < cubeNumber &&
+            (leastAmountOfGreenCubes = cubeNumber);
+          break;
+        }
+        case Cubecolors.red: {
+          cubeNumber > totalAmountOfRedCubes && (impossibleGame = true);
+          leastAmountOfRedCubes < cubeNumber &&
+            (leastAmountOfRedCubes = cubeNumber);
+          break;
         }
       }
     });
   });
-  return impossibleGame ? 0 : gameId;
+  // return impossibleGame ? 0 : gameId;
+  const powerSetOfCubes =
+    leastAmountOfBlueCubes * leastAmountOfGreenCubes * leastAmountOfRedCubes;
+  console.log(powerSetOfCubes);
+  return powerSetOfCubes;
 }
 
 function day2(inputFile: string) {
