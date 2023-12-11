@@ -49,7 +49,6 @@ function playGame(gameId: number, game: string): number {
   // return impossibleGame ? 0 : gameId;
   const powerSetOfCubes =
     leastAmountOfBlueCubes * leastAmountOfGreenCubes * leastAmountOfRedCubes;
-  console.log(powerSetOfCubes);
   return powerSetOfCubes;
 }
 
