@@ -9,7 +9,7 @@ function day4(inputFile: string) {
   console.log(points);
 }
 
-function checkCards(card: string): any {
+function checkCards(card: string): number {
   let points = 0;
   const winningNumbers = card.split("|")[0].trim().split(" ");
   const myNumbers = card
