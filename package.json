@@ -1,0 +1,10 @@
+{
+  "name": "Advent of code 2023",
+  "dependencies": {
+    "typescript": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.15",
+    "ts-node": "^10.4.0"
+  }
+}
