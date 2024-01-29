@@ -22,31 +22,38 @@ type Hand = {
   cards: number[];
   bid: number;
   type: type;
-  rank: number;
 };
 
 function day7(inputFile: string) {
   const lines: string = fs.readFileSync(inputFile, "utf-8");
   const splittedLines = lines.split("\r\n");
   const hands: Hand[] = splittedLines.map((line) => parseHand(line));
-  console.log(hands);
-  rankHandsByType(hands);
+  hands.sort((a, b) => {
+    if (a.type > b.type) return 1;
+    if (b.type > a.type) return -1;
+    return tieBreaker(a.cards, b.cards);
+  });
+  const total = hands.reduce(
+    (total, current, currentIndex) => total + current.bid * (currentIndex + 1),
+    0
+  );
+
+  console.log(total);
+}
+
+function parseToCard(card: string): number {
+  return Number.isNaN(Number(card)) ? faceCardsValues[card] : Number(card);
 }
 
 const parseHand = (line: string): Hand => {
   const cards = [...line.split(" ")[0]];
   const numberCards = cards.map((card) => parseToCard(card));
 
-  function parseToCard(card: string): number {
-    return Number.isNaN(Number(card)) ? faceCardsValues[card] : Number(card);
-  }
-
   const bid = Number(line.split(" ")[1]);
   return {
     cards: numberCards,
     bid: bid,
     type: getType(numberCards),
-    rank: 0,
   };
 };
 
@@ -89,40 +96,26 @@ function getType(cards: Hand["cards"]): type {
   return type.HighCard;
 }
 
-function rankHandsByType(hands: Hand[]) {
-  hands.sort((a, b) => a.type - b.type);
-
-  // console.log(hands, "voor");
-
-  hands.sort((a, b) => {
-    if (a.type === b.type) {
-      tieBreaker(a.cards, b.cards);
-    }
-    return null;
-  });
-  // console.log(hands, "na");
-}
-
-function tieBreaker(cardsA: number[], cardsB: number[]) {
+function tieBreaker(cardsA: number[], cardsB: number[]): number {
   for (let i = 0; i < cardsA.length; i++) {
-    for (let x = 0; x < cardsB.length; x++) {
-      if (cardsA[i] === cardsB[x]) {
-        i++;
-        x++;
-      } else if (cardsA[i] < cardsB[x]) {
-        return 1;
-      } else if (cardsA[i] > cardsB[x]) {
-        return -1;
-      }
+    if (cardsA[i] === cardsB[i]) {
+      continue;
+    }
+    if (cardsA[i] > cardsB[i]) {
+      return 1;
+    }
+    if (cardsB[i] > cardsA[i]) {
+      return -1;
     }
   }
+  return 0;
 }
 day7("./inputDay7.txt");
 
-[
-  ...new Map([
-    ["a", 4],
-    ["b", 8],
-    ["c", 1],
-  ]).values(),
-].sort((a, b) => b - a);
+// [
+//   ...new Map([
+//     ["a", 4],
+//     ["b", 8],
+//     ["c", 1],
+//   ]).values(),
+// ].sort((a, b) => b - a);
