@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 enum type {
   fiveOfAKind = 6,
@@ -20,48 +20,40 @@ const faceCardsValues: { [key: string]: number } = {
 
 type Hand = {
   cards: number[];
-  cardsMap: Map<number, number> | null;
   bid: number;
-  type: type | null;
+  type: type;
   rank: number;
 };
 
 function day7(inputFile: string) {
-  const hands: Hand[] = [];
-  const lines = fs.readFileSync(inputFile, "utf-8");
+  const lines: string = fs.readFileSync(inputFile, "utf-8");
   const splittedLines = lines.split("\r\n");
-  splittedLines.forEach((line) => hands.push(hand(line)));
-  hands.forEach((hand) => checkHand(hand));
-  hands.forEach((hand) => checkType(hand));
+  const hands: Hand[] = splittedLines.map((line) => parseHand(line));
+  console.log(hands);
   rankHandsByType(hands);
 }
 
-const hand = (line: string): Hand => {
-  const cards = line.split(" ")[0].split("");
-  const numberCards: number[] = [];
-  let cardNumber: number = 0;
-  for (let i = 0; i < cards.length; i++) {
-    if (!Number(cards[i])) {
-      cardNumber = faceCardsValues[cards[i]];
-    } else {
-      cardNumber = Number(cards[i]);
-    }
-    numberCards.push(cardNumber);
+const parseHand = (line: string): Hand => {
+  const cards = [...line.split(" ")[0]];
+  const numberCards = cards.map((card) => parseToCard(card));
+
+  function parseToCard(card: string): number {
+    return Number.isNaN(Number(card)) ? faceCardsValues[card] : Number(card);
   }
+
   const bid = Number(line.split(" ")[1]);
   return {
     cards: numberCards,
-    cardsMap: null,
     bid: bid,
-    type: undefined,
+    type: getType(numberCards),
     rank: 0,
   };
 };
 
-function checkHand(hand: Hand) {
+function getCardCounts(cards: number[]) {
   const cardsMap = new Map<number, number>();
-  for (let i = 0; i < hand.cards.length; i++) {
-    let card: number = hand.cards[i];
+  for (let i = 0; i < cards.length; i++) {
+    let card: number = cards[i];
     let currentCountOfCard = cardsMap.get(card);
     if (!currentCountOfCard) {
       cardsMap.set(card, 1);
@@ -70,47 +62,37 @@ function checkHand(hand: Hand) {
       cardsMap.set(card, currentCountOfCard);
     }
   }
-  //sort map by entries
-  //create array from map
-  const entriesArray = Array.from(cardsMap.entries());
-  //sort array by value of the map, no sorting on a map
-  entriesArray.sort((a, b) => b[1] - a[1]);
-  //turn it back into a map
-  const sortedMap = new Map(entriesArray);
-  hand.cardsMap = sortedMap;
+  return cardsMap;
 }
 
-function checkType(hand: Hand) {
-  let currentType;
-  // console.log(hand.cardsMap);
-  for (const [card, amount] of hand.cardsMap) {
-    if (amount === 5) {
-      hand.type = type.fiveOfAKind;
-    } else if (amount === 4) {
-      hand.type = type.fourOfAKind;
-      currentType = type.fourOfAKind;
-    } else if (amount === 3) {
-      hand.type = type.ThreeOfAKind;
-      currentType = type.ThreeOfAKind;
-    } else if (amount === 2 && currentType === type.ThreeOfAKind) {
-      hand.type = type.FullHouse;
-    } else if (amount === 2 && currentType == type.OnePair) {
-      hand.type = type.TwoPair;
-    } else if (amount === 2) {
-      hand.type = type.OnePair;
-      currentType = type.OnePair;
-    } else if (amount === 1 && currentType === undefined) {
-      hand.type = type.HighCard;
-    }
+function getType(cards: Hand["cards"]): type {
+  const counts = getCardCounts(cards);
+  const amounts = [...counts.values()].sort((a, b) => b - a);
+  if (amounts[0] === 5) {
+    return type.fiveOfAKind;
   }
-
-  currentType = null;
+  if (amounts[0] === 4) {
+    return type.fourOfAKind;
+  }
+  if (amounts[0] === 3 && amounts[1] === 2) {
+    return type.FullHouse;
+  }
+  if (amounts[0] === 3) {
+    return type.ThreeOfAKind;
+  }
+  if (amounts[0] === 2 && amounts[1] === 2) {
+    return type.TwoPair;
+  }
+  if (amounts[0] === 2) {
+    return type.OnePair;
+  }
+  return type.HighCard;
 }
 
 function rankHandsByType(hands: Hand[]) {
   hands.sort((a, b) => a.type - b.type);
 
-  console.log(hands, "voor");
+  // console.log(hands, "voor");
 
   hands.sort((a, b) => {
     if (a.type === b.type) {
@@ -118,7 +100,7 @@ function rankHandsByType(hands: Hand[]) {
     }
     return null;
   });
-  console.log(hands, "na");
+  // console.log(hands, "na");
 }
 
 function tieBreaker(cardsA: number[], cardsB: number[]) {
@@ -136,3 +118,11 @@ function tieBreaker(cardsA: number[], cardsB: number[]) {
   }
 }
 day7("./inputDay7.txt");
+
+[
+  ...new Map([
+    ["a", 4],
+    ["b", 8],
+    ["c", 1],
+  ]).values(),
+].sort((a, b) => b - a);
