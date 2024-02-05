@@ -1,6 +1,8 @@
+import assert from "node:assert";
 import * as fs from "node:fs";
+import { cachedDataVersionTag } from "node:v8";
 
-enum type {
+enum HandType {
   fiveOfAKind = 6,
   fourOfAKind = 5,
   FullHouse = 4,
@@ -14,103 +16,154 @@ const faceCardsValues: { [key: string]: number } = {
   A: 14,
   K: 13,
   Q: 12,
-  J: 11,
+  J: 1,
   T: 10,
 };
 
 type Hand = {
   cards: number[];
   bid: number;
-  type: type;
+  handType: HandType;
+  handTypeWithJokers: HandType;
 };
 
-function day7(inputFile: string) {
-  const lines: string = fs.readFileSync(inputFile, "utf-8");
-  const splittedLines = lines.split("\r\n");
-  const hands: Hand[] = splittedLines.map((line) => parseHand(line));
+function readFile(inputFile: string) {
+  return fs.readFileSync(inputFile, "utf-8");
+}
+
+function parseCards(inputFileName: string) {
+  const lines = readFile(inputFileName);
+  const splitLines = lines.split("\n");
+  return splitLines.map((line) => parseHand(line));
+}
+
+function day7(hands: Hand[]) {
   hands.sort((a, b) => {
-    if (a.type > b.type) return 1;
-    if (b.type > a.type) return -1;
-    return tieBreaker(a.cards, b.cards);
+    return sortHands(a, b);
   });
+
   const total = hands.reduce(
     (total, current, currentIndex) => total + current.bid * (currentIndex + 1),
     0
   );
 
-  console.log(total);
+  return total;
+}
+
+function day7part2(hands: Hand[]) {
+  hands.sort((a, b) => {
+    return sortHands(a, b, true);
+  });
+
+  // console.log(hands);
+  const total = hands.reduce(
+    (total, current, currentIndex) => total + current.bid * (currentIndex + 1),
+    0
+  );
+
+  return total;
+}
+
+function sortHands(
+  handA: Hand,
+  handB: Hand,
+  handTypeWithJoker?: Boolean
+): number {
+  if (!handTypeWithJoker) {
+    if (handA.handType > handB.handType) return 1;
+    if (handB.handType > handA.handType) return -1;
+  } else {
+    if (handA.handTypeWithJokers > handB.handTypeWithJokers) return 1;
+    if (handB.handTypeWithJokers > handA.handTypeWithJokers) return -1;
+  }
+
+  return tieBreaker(handA.cards, handB.cards);
+}
+
+function tieBreaker(cardsA: number[], cardsB: number[]): number {
+  let i = 0;
+  for (let i = 0; i < cardsA.length; i++) {
+    const comparison = cardsA[i] - cardsB[i];
+    if (comparison !== 0) return comparison;
+  }
+  return 0;
 }
 
 function parseToCard(card: string): number {
-  return Number.isNaN(Number(card)) ? faceCardsValues[card] : Number(card);
+  return card in faceCardsValues ? faceCardsValues[card] : Number(card);
 }
 
 const parseHand = (line: string): Hand => {
-  const cards = [...line.split(" ")[0]];
-  const numberCards = cards.map((card) => parseToCard(card));
-
-  const bid = Number(line.split(" ")[1]);
+  const [cardString, bidString] = line.split(" ");
+  const cards = cardString.split("").map((card) => parseToCard(card));
+  const bid = Number(bidString);
   return {
-    cards: numberCards,
-    bid: bid,
-    type: getType(numberCards),
+    cards,
+    bid,
+    handType: getHandType(cards),
+    handTypeWithJokers: getHandTypeWithJoker(cards),
   };
 };
 
 function getCardCounts(cards: number[]) {
   const cardsMap = new Map<number, number>();
-  for (let i = 0; i < cards.length; i++) {
-    let card: number = cards[i];
-    let currentCountOfCard = cardsMap.get(card);
-    if (!currentCountOfCard) {
-      cardsMap.set(card, 1);
-    } else {
-      currentCountOfCard++;
-      cardsMap.set(card, currentCountOfCard);
-    }
+  for (const card of cards) {
+    const currentCountOfCard = cardsMap.get(card) || 0;
+    cardsMap.set(card, currentCountOfCard + 1);
   }
   return cardsMap;
 }
 
-function getType(cards: Hand["cards"]): type {
+function getHandType(cards: Hand["cards"]): HandType {
   const counts = getCardCounts(cards);
-  const amounts = [...counts.values()].sort((a, b) => b - a);
-  if (amounts[0] === 5) {
-    return type.fiveOfAKind;
-  }
-  if (amounts[0] === 4) {
-    return type.fourOfAKind;
-  }
-  if (amounts[0] === 3 && amounts[1] === 2) {
-    return type.FullHouse;
-  }
-  if (amounts[0] === 3) {
-    return type.ThreeOfAKind;
-  }
-  if (amounts[0] === 2 && amounts[1] === 2) {
-    return type.TwoPair;
-  }
-  if (amounts[0] === 2) {
-    return type.OnePair;
-  }
-  return type.HighCard;
+  const sortedCounts = [...counts.values()].sort((a, b) => b - a);
+  return handTypeFromSortedCounts(sortedCounts);
 }
 
-function tieBreaker(cardsA: number[], cardsB: number[]): number {
-  for (let i = 0; i < cardsA.length; i++) {
-    if (cardsA[i] === cardsB[i]) {
-      continue;
-    }
-    if (cardsA[i] > cardsB[i]) {
-      return 1;
-    }
-    if (cardsB[i] > cardsA[i]) {
-      return -1;
-    }
+function handTypeFromSortedCounts(amounts: number[]) {
+  if (amounts[0] === 5) {
+    return HandType.fiveOfAKind;
   }
-  return 0;
+  if (amounts[0] === 4) {
+    return HandType.fourOfAKind;
+  }
+  if (amounts[0] === 3 && amounts[1] === 2) {
+    return HandType.FullHouse;
+  }
+  if (amounts[0] === 3) {
+    return HandType.ThreeOfAKind;
+  }
+  if (amounts[0] === 2 && amounts[1] === 2) {
+    return HandType.TwoPair;
+  }
+  if (amounts[0] === 2) {
+    return HandType.OnePair;
+  }
+  return HandType.HighCard;
 }
-day7("./inputDay7.txt");
+
+function getHandTypeWithJoker(cards: Hand["cards"]): HandType {
+  const counts = getCardCounts(cards);
+  const jokerCard = 1;
+
+  let jokerCount = counts.get(jokerCard) || 0;
+  counts.delete(jokerCard);
+
+  const sortedCounts = [...counts.values()].sort((a, b) => b - a);
+
+  sortedCounts[0] += jokerCount;
+  return handTypeFromSortedCounts(sortedCounts);
+}
+
+const hands = parseCards("./inputDay7.txt");
+// const hands = parseCards("./testInput.txt");
+const result = day7(hands);
+console.log({ result });
+// console.log(result);
+// assert(result === 248217452);
+const result2 = day7part2(hands);
+console.log({ result2 });
+// assert(result2 === 5905);
 
 // [
 //   ...new Map([
@@ -119,3 +172,7 @@ day7("./inputDay7.txt");
 //     ["c", 1],
 //   ]).values(),
 // ].sort((a, b) => b - a);
+
+// 245841065; NIET
+// 246000630; NIET
+//Het zit ergens bij de joker denk.
