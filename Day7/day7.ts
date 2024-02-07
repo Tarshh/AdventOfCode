@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import * as fs from "node:fs";
-import { cachedDataVersionTag } from "node:v8";
 
 enum HandType {
   fiveOfAKind = 6,
@@ -55,7 +54,6 @@ function day7part2(hands: Hand[]) {
     return sortHands(a, b, true);
   });
 
-  // console.log(hands);
   const total = hands.reduce(
     (total, current, currentIndex) => total + current.bid * (currentIndex + 1),
     0
@@ -145,34 +143,22 @@ function handTypeFromSortedCounts(amounts: number[]) {
 function getHandTypeWithJoker(cards: Hand["cards"]): HandType {
   const counts = getCardCounts(cards);
   const jokerCard = 1;
-
   let jokerCount = counts.get(jokerCard) || 0;
   counts.delete(jokerCard);
 
   const sortedCounts = [...counts.values()].sort((a, b) => b - a);
-
   sortedCounts[0] += jokerCount;
+
+  if (jokerCount === 5) {
+    sortedCounts[0] = 5;
+  }
+
   return handTypeFromSortedCounts(sortedCounts);
 }
 
 const hands = parseCards("./inputDay7.txt");
-// const hands = parseCards("./testInput.txt");
 const result = day7(hands);
-console.log({ result });
-// console.log(result);
-// assert(result === 248217452);
+assert(result === 248217452);
 const result2 = day7part2(hands);
 console.log({ result2 });
-// assert(result2 === 5905);
-
-// [
-//   ...new Map([
-//     ["a", 4],
-//     ["b", 8],
-//     ["c", 1],
-//   ]).values(),
-// ].sort((a, b) => b - a);
-
-// 245841065; NIET
-// 246000630; NIET
-//Het zit ergens bij de joker denk.
+assert(result2 === 245576185);
