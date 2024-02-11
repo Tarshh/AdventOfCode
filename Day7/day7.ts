@@ -147,11 +147,8 @@ function getHandTypeWithJoker(cards: Hand["cards"]): HandType {
   counts.delete(jokerCard);
 
   const sortedCounts = [...counts.values()].sort((a, b) => b - a);
-  sortedCounts[0] += jokerCount;
 
-  if (jokerCount === 5) {
-    sortedCounts[0] = 5;
-  }
+  jokerCount === 5 ? (sortedCounts[0] = 5) : (sortedCounts[0] += jokerCount);
 
   return handTypeFromSortedCounts(sortedCounts);
 }
